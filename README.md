@@ -101,7 +101,7 @@ Execute the scripts in the `scripts/` directory sequentially. Use `--help` with 
     * Trains the DistilBERT model using data flagged with `is_training_candidate=1`.
     * Saves the best model to the path specified by `--model-save-dir` (defaults to `models/span_predictor/`).
     ```bash
-    python scripts/02_train_span_model.py --db-path data/database/image_data.db --model-save-dir models/span_predictor/ --epochs 5
+    python scripts/02_trainSpanModel.py --db-path data/database/image_data.db --model-save-dir models/span_predictor/ --epochs 5
     ```
 
 3.  **Predict Descriptions (Stage 3b):**
