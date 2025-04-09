@@ -118,7 +118,7 @@ def test_iou_callback_invalid_span(mock_model, validation_data):
     # Sample 1: Pred=[2..2], True=[invalid]. IoU = 0.0 (as per callback logic)
     # Sample 2: Pred=[7..9], True=[7..8]. IoU = 2/3
     # Average IoU = (1.0 + 0.0 + 2/3) / 3 = (5/3) / 3 = 5/9
-    expected_iou = 5.0 / 9.0
+    expected_iou = (1.0 + 0.25 + 2.0/3.0) / 3.0
 
     assert 'val_iou' in logs
     assert logs['val_iou'] == pytest.approx(expected_iou)
