@@ -84,9 +84,25 @@ def prepare_training_data(db_rows, tokenizer: DistilBertTokenizer, max_len):
         # For simplicity now, we assume the original DB check was sufficient.
         # Re-find alt_tokens within input_ids (excluding special tokens for search)
         search_sequence = truncated_before + [img_token_id] + truncated_after
+
+        logger.debug(f"Context ID: {row['context_id']}")
+        logger.debug(f"Alt Text: '{alt_text}'")
+        logger.debug(f"Alt Tokens: {alt_tokens}")
+        # Decode search sequence for easier reading (might be long)
+        try:
+            decoded_search = tokenizer.decode(search_sequence)
+            logger.debug(f"Search Sequence (decoded): '{decoded_search[:500]}...'") # Log prefix
+        except: # Handle potential decoding errors
+            logger.debug(f"Search Sequence (tokens): {search_sequence}")
+
         start_idx_in_search, end_idx_in_search = find_sublist_indices(search_sequence, alt_tokens)
 
         if start_idx_in_search is None:
+            logger.warning(f"Alt tokens NOT FOUND in search sequence for context {row['context_id']}")
+            # Maybe log original sequence too for comparison if needed
+            original_search = before_tokens + [img_token_id] + after_tokens
+            logger.debug(f"Original search sequence had length: {len(original_search)}")
+
             # Alt text might have been truncated away or wasn't found by regex originally
             # Let's try searching the original, untruncated sequence (less reliable for labels)
             # original_search = before_tokens + [img_token_id] + after_tokens
