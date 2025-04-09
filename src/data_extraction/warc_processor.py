@@ -26,16 +26,28 @@ def process_warc_file(warc_path, db_path, mode='inference'):
     logger.info(f"Starting processing of WARC file: {warc_filename}, mode: {mode}")
 
     try:
+        # It's crucial that parse_http=True is enabled for http_headers to be populated
         with open(warc_path, "rb") as f, db_connect(db_path) as cursor:
-            # Use stream=True for potentially large records, adjust parse_http if needed
             iterator = ArchiveIterator(f, record_types=WarcRecordType.response, parse_http=True)
 
             for record in iterator:
                 count_records += 1
-                if record.http_headers is None or record.content_type is None:
+                # Ensure http_headers were parsed successfully
+                if record.http_headers is None:
                     continue
 
-                if record.content_type.startswith("text/html") and record.content_length >= 128:
+                # --- Start Correction ---
+                # Get content type safely from http_headers
+                # Use .get() with a default empty string in case the header is missing
+                content_type_header = record.http_headers.get('Content-Type', '')
+                if not content_type_header: # Skip if Content-Type header is missing or empty
+                     continue
+
+                # Now check if it's HTML and length is sufficient
+                # Use the content_type_header variable we just fetched
+                if content_type_header.lower().startswith("text/html") and record.content_length >= 128:
+                # --- End Correction ---
+
                     count_html += 1
                     page_url = str(record.headers['WARC-Target-URI'])
                     html_bytes = record.reader.read() # Read content bytes
@@ -45,7 +57,7 @@ def process_warc_file(warc_path, db_path, mode='inference'):
 
                     try:
                         # Parse the HTML page to get image contexts
-                        image_contexts = parse_html_page(html_bytes, page_url)
+                        image_contexts = parse_html_page(html_bytes, page_url) # Assuming parse_html_page is defined correctly
                         count_processed += 1
 
                         for context_data in image_contexts:
