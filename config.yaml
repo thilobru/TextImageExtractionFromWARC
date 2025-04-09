@@ -1,0 +1,25 @@
+paths:
+  project_root: "." # Relative or absolute
+  data_dir: "data"
+  database_dir: "data/database"
+  db_name: "image_data.db"
+  warc_dir: "data/warc"
+  models_dir: "models/span_predictor"
+  images_output_dir: "images_output"
+
+training_params:
+  max_len: 512
+  batch_size: 12
+  epochs: 10
+  learning_rate: 0.00005 # 5e-5
+  validation_split: 0.2
+
+inference_params:
+  max_len: 512
+  max_before_tokens: 250
+  min_image_size_bytes: 5120 # 5KB
+  min_image_resolution: [224, 224]
+  download_timeout_seconds: 5
+  clip_model_name: "openai/clip-vit-base-patch32"
+  prediction_batch_size: 32
+  enrichment_batch_size: 100 # DB fetch size for enrichment

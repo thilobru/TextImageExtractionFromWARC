@@ -1,0 +1,61 @@
+# .gitignore
+
+# Python runtime files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.venv/
+*.venv
+
+# IDE / Editor specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Data files (often large - consider Git LFS if you need to track them)
+data/database/image_data.db
+data/warc/*
+!data/warc/.gitkeep # Keep the directory structure
+images_output/
+!images_output/.gitkeep
+
+# Model files (large - use Git LFS or store elsewhere)
+models/span_predictor/*.h5
+models/span_predictor/*.keras
+models/span_predictor/variables/
+models/span_predictor/assets/
+!models/span_predictor/.gitkeep
+
+# Log files
+*.log
+logs/
+
+# W&B local files
+wandb/
+
+# Notebook checkpoints
+.ipynb_checkpoints
+
+# Output directories
+analysis_output/
+!analysis_output/.gitkeep
+
+# Credentials / Secrets (NEVER commit these)
+*.env
+credentials.*
+*.key
+*.pem
+
+# Build artifacts / Distribution
+dist/
+build/
+*.egg-info/

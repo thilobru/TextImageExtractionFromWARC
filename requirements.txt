@@ -1,0 +1,34 @@
+# requirements.txt
+
+# Core ML/NLP
+tensorflow>=2.8.0 # Or your specific TF version
+transformers>=4.20.0 # Or your specific version
+torch>=1.10.0 # Required by transformers CLIPModel
+torchvision # Often needed alongside torch
+accelerate # Often helpful for transformers
+
+# WARC Processing
+fastwarc>=0.4.0
+resiliparse>=0.6.0 # Check compatibility with fastwarc
+
+# Data Handling & Utilities
+numpy>=1.20.0
+requests>=2.25.0
+Pillow>=9.0.0 # For image processing (PIL)
+python-jsonlines>=3.0.0 # If you still use it anywhere, or for temp files
+tqdm>=4.60.0 # Progress bars
+PyYAML>=6.0 # If you decide to use config.yaml
+
+# Experiment Tracking (Optional)
+wandb>=0.12.0
+
+# Analysis/Plotting (Optional, if not just using notebooks)
+pandas>=1.3.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+scipy>=1.7.0 # For stats like pearsonr
+
+# Add specific versions if you encounter compatibility issues.
+# You can generate this automatically from your environment using:
+# pip freeze > requirements.txt
+# (Clean it up afterwards to remove dev tools etc.)
