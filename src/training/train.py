@@ -37,8 +37,8 @@ class ExactMatch(keras.callbacks.Callback):
         exact_matches = (pred_start_idx == self.y_eval_start) & (pred_end_idx == self.y_eval_end)
         acc = np.mean(exact_matches)
 
-        logs = logs or {}
-        logs['val_exact_match'] = acc
+        if logs is not None: # Check if logs dict exists (it should)
+             logs['val_exact_match'] = acc
         self.history_log.setdefault('val_exact_match', []).append(acc)
         # W&B logging is handled by WandbCallback if configured
         # wandb.log({"val_exact_match": acc}, step=epoch)
@@ -84,8 +84,8 @@ class IoUCallback(keras.callbacks.Callback):
 
         avg_iou = np.mean(iou_list) if iou_list else 0.0
 
-        logs = logs or {}
-        logs['val_iou'] = avg_iou
+        if logs is not None: # Check if logs dict exists
+            logs['val_iou'] = avg_iou
         self.history_log.setdefault('val_iou', []).append(avg_iou)
         # wandb.log({"val_iou": avg_iou}, step=epoch)
         logger.info(f"Epoch {epoch+1}: Validation IoU = {avg_iou:.4f}")
