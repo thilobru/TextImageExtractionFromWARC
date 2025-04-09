@@ -1,4 +1,3 @@
-# src/common/config.py
 import os
 
 # Basic paths (can be overridden by command-line args)

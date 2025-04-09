@@ -1,4 +1,3 @@
-# src/common/database.py
 import sqlite3
 import json
 import logging
