@@ -1,66 +1,62 @@
 # src/training/model.py
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-from transformers import TFDistilBertModel, DistilBertTokenizer
+from tensorflow import keras # Keep for type hints if needed elsewhere
+# --- Start Change ---
+# Use TFAutoModelForQuestionAnswering for flexibility or specific class
+from transformers import TFAutoModelForQuestionAnswering, TFDistilBertForQuestionAnswering, DistilBertTokenizer
+# --- End Change ---
 import logging
 
 logger = logging.getLogger(__name__)
 
-class SpanPredictionModel(keras.Model):
-    def __init__(self, max_len, tokenizer_vocab_size, name="span_prediction_model", **kwargs):
-        super().__init__(name=name, **kwargs)
-        self.max_len = max_len
+# Remove the SpanPredictionModel class definition
 
-        try:
-            self.encoder = TFDistilBertModel.from_pretrained("distilbert-base-uncased")
-            if self.encoder.config.vocab_size != tokenizer_vocab_size:
-                 self.encoder.resize_token_embeddings(tokenizer_vocab_size)
-                 logger.info(f"Resized DistilBERT token embeddings to {tokenizer_vocab_size}")
-            self.hidden_size = self.encoder.config.dim
-        except Exception as e:
-            logger.error(f"Failed to load DistilBert model: {e}")
-            raise
-
-        self.start_dense = layers.Dense(1, name="start_logit", use_bias=False)
-        # Flatten layer removed
-        self.end_dense = layers.Dense(1, name="end_logit", use_bias=False)
-        # Flatten layer removed
-
-    # No @tf.function decorator for now
-    def call(self, input_ids, attention_mask, training=False): # Use named args
-        encoder_output = self.encoder(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            training=training
-        )[0] # Shape: (batch_size, sequence_length, hidden_size)
-
-        start_logits = self.start_dense(encoder_output) # Shape: (batch_size, sequence_length, 1)
-        # Replace Flatten layer with tf.squeeze
-        start_logits = tf.squeeze(start_logits, axis=-1, name="start_squeeze") # Shape: (batch_size, sequence_length)
-
-        end_logits = self.end_dense(encoder_output) # Shape: (batch_size, sequence_length, 1)
-        # Replace Flatten layer with tf.squeeze
-        end_logits = tf.squeeze(end_logits, axis=-1, name="end_squeeze") # Shape: (batch_size, sequence_length)
-
-        return [start_logits, end_logits]
-
-
-def create_span_prediction_model(max_len, learning_rate, tokenizer_vocab_size):
+def create_span_prediction_model(max_len, learning_rate, tokenizer_vocab_size,
+                                 model_checkpoint="distilbert-base-uncased"):
     """
-    Creates and compiles the DistilBERT model for span prediction using subclassing.
-    Model is built on first call.
+    Loads a pre-trained Transformer model for Question Answering.
+
+    Args:
+        max_len (int): Maximum sequence length (used for info, not directly here).
+        learning_rate (float): Optimizer learning rate (compilation happens in train.py).
+        tokenizer_vocab_size (int): Size of the tokenizer vocabulary (incl. special tokens).
+        model_checkpoint (str): The Hugging Face model identifier.
+
+    Returns:
+        TFPreTrainedModel: Loaded Hugging Face model for Question Answering.
+                           Model is NOT compiled here.
     """
-    model = SpanPredictionModel(max_len=max_len, tokenizer_vocab_size=tokenizer_vocab_size)
+    logger.info(f"Loading pre-trained QA model: {model_checkpoint}")
+    try:
+        # Load the specified QA model
+        # Use the specific class for clarity or TFAutoModelForQuestionAnswering
+        model = TFDistilBertForQuestionAnswering.from_pretrained(model_checkpoint)
 
-    loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-    optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
-    model.compile(optimizer=optimizer, loss=[loss, loss])
+        # --- Handle Tokenizer Resizing ---
+        # Get the underlying base model (e.g., model.distilbert) to resize embeddings
+        base_model = getattr(model, model.base_model_prefix, None)
+        if base_model and hasattr(base_model, 'resize_token_embeddings'):
+             if base_model.config.vocab_size != tokenizer_vocab_size:
+                  base_model.resize_token_embeddings(tokenizer_vocab_size)
+                  # Also update the main model's config if necessary
+                  model.config.vocab_size = tokenizer_vocab_size
+                  logger.info(f"Resized model token embeddings to {tokenizer_vocab_size}")
+        elif model.config.vocab_size != tokenizer_vocab_size:
+             # Fallback if base_model attribute isn't standard (less common for TF)
+             logger.warning("Could not directly access base model to resize embeddings, attempting on main model.")
+             try:
+                  model.resize_token_embeddings(tokenizer_vocab_size)
+                  logger.info(f"Resized model token embeddings to {tokenizer_vocab_size}")
+             except AttributeError:
+                   logger.error("Failed to resize token embeddings. Ensure model architecture supports it or handle manually.")
+                   raise RuntimeError("Embedding resizing failed.") # Make it a fatal error
 
-    logger.info("Span prediction model (subclassed) created and compiled.")
+    except Exception as e:
+        logger.error(f"Failed to load/resize pre-trained QA model '{model_checkpoint}': {e}")
+        raise
 
-    # --- REMOVED explicit model.build() and model.summary() ---
-    # The model will be built when first called.
-    # Summary can be printed after building if needed.
+    # Note: Compilation (optimizer, loss) is now handled in the training script
+    logger.info(f"Successfully loaded QA model: {model_checkpoint}")
+    model.summary(print_fn=logger.info) # Print summary
 
     return model

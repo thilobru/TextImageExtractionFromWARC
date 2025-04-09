@@ -11,116 +11,116 @@ import tempfile
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
-from transformers import DistilBertTokenizer
-# Assuming model.py uses tf.squeeze and no explicit build in create_...
+from transformers import DistilBertTokenizer, TFDistilBertForQuestionAnswering, TFAutoModelForQuestionAnswering
+# Import the creator function
 from src.training.model import create_span_prediction_model
 
 # --- Fixtures ---
 @pytest.fixture(scope="module")
 def tokenizer_info():
-    tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
+    """Provides tokenizer and its vocab size."""
+    # Use the specific checkpoint name expected by the model creator
+    checkpoint = "distilbert-base-uncased"
+    tokenizer = DistilBertTokenizer.from_pretrained(checkpoint)
     special_token = "[IMG]"
     if special_token not in tokenizer.additional_special_tokens:
         tokenizer.add_special_tokens({'additional_special_tokens': [special_token]})
-    return tokenizer, len(tokenizer)
+    return tokenizer, len(tokenizer), checkpoint
 
 # --- Tests ---
 
-def test_create_model_builds(tokenizer_info):
-    # (Should pass)
-    _, vocab_size = tokenizer_info
-    max_len = 128; learning_rate = 5e-5
+def test_create_model_loads(tokenizer_info):
+    """Test if the QA model can be loaded without errors."""
+    tokenizer, vocab_size, checkpoint = tokenizer_info
+    max_len = 128
     try:
-        model = create_span_prediction_model(max_len, learning_rate, vocab_size)
-        assert isinstance(model, keras.Model)
+        # Pass necessary args (learning_rate isn't used by create_... anymore)
+        model = create_span_prediction_model(max_len, 0.0, vocab_size, model_checkpoint=checkpoint)
+        # Check type
+        assert isinstance(model, TFDistilBertForQuestionAnswering)
+        # Check if embeddings were resized (optional)
+        base_model = getattr(model, model.base_model_prefix, None)
+        if base_model:
+             assert base_model.config.vocab_size == vocab_size
+        else:
+             assert model.config.vocab_size == vocab_size
+
     except Exception as e:
         pytest.fail(f"create_span_prediction_model raised an exception: {e}")
 
-def test_model_output_shapes(tokenizer_info):
-    # (Should pass)
-    _, vocab_size = tokenizer_info
-    max_len = 128; learning_rate = 5e-5; batch_size = 4
-    model = create_span_prediction_model(max_len, learning_rate, vocab_size)
+def test_model_output_shapes_and_type(tokenizer_info):
+    """Test the output shapes and type of the QA model."""
+    tokenizer, vocab_size, checkpoint = tokenizer_info
+    max_len = 128
+    batch_size = 4
+
+    model = create_span_prediction_model(max_len, 0.0, vocab_size, model_checkpoint=checkpoint)
+
+    # Create dummy input
     dummy_input_ids = tf.constant(np.random.randint(0, vocab_size, size=(batch_size, max_len), dtype=np.int32))
     dummy_attention_mask = tf.constant(np.ones((batch_size, max_len), dtype=np.int32))
-    outputs = model(input_ids=dummy_input_ids, attention_mask=dummy_attention_mask, training=False)
-    assert isinstance(outputs, list); assert len(outputs) == 2
-    start_logits, end_logits = outputs
-    assert isinstance(start_logits, tf.Tensor); assert isinstance(end_logits, tf.Tensor)
-    assert start_logits.shape == (batch_size, max_len)
-    assert end_logits.shape == (batch_size, max_len)
 
-# --- Updated Test ---
-def test_model_save_load(tokenizer_info, tmp_path):
-    """Tests saving/reloading model weights completes and loaded model works."""
-    _, vocab_size = tokenizer_info
+    # Call model using dictionary input (standard for HF models)
+    inputs = {'input_ids': dummy_input_ids, 'attention_mask': dummy_attention_mask}
+    outputs = model(inputs) # training=False is default
+
+    # Output is a specific HF output object
+    assert hasattr(outputs, 'start_logits')
+    assert hasattr(outputs, 'end_logits')
+    assert isinstance(outputs.start_logits, tf.Tensor)
+    assert isinstance(outputs.end_logits, tf.Tensor)
+    assert outputs.start_logits.shape == (batch_size, max_len)
+    assert outputs.end_logits.shape == (batch_size, max_len)
+
+# --- New Test for save_pretrained / from_pretrained ---
+def test_model_save_load_pretrained(tokenizer_info, tmp_path):
+    """Tests saving and reloading using save_pretrained/from_pretrained."""
+    tokenizer, vocab_size, checkpoint = tokenizer_info
     max_len = 64
-    learning_rate = 5e-5
-    batch_size = 2
 
     # 1. Create the model
-    model = create_span_prediction_model(max_len, learning_rate, vocab_size)
+    model = create_span_prediction_model(max_len, 0.0, vocab_size, model_checkpoint=checkpoint)
 
-    # 2. Define save path for weights
-    save_path = tmp_path / "test_model.weights.h5"
-    save_path_str = str(save_path)
+    # 2. Define save directory
+    save_directory = tmp_path / "hf_qa_model"
+    save_directory_str = str(save_directory)
 
-    # 3. Build model
-    dummy_input_ids = tf.zeros((batch_size, max_len), dtype=tf.int32)
-    dummy_attention_mask = tf.ones((batch_size, max_len), dtype=tf.int32)
+    # 3. Save model and tokenizer
     try:
-        _ = model(input_ids=dummy_input_ids, attention_mask=dummy_attention_mask, training=False)
-        assert model.built
+        model.save_pretrained(save_directory_str)
+        tokenizer.save_pretrained(save_directory_str)
+        print(f"Model and tokenizer saved to {save_directory_str}")
+        assert os.path.exists(os.path.join(save_directory_str, "tf_model.h5")) # Or config.json etc.
+        assert os.path.exists(os.path.join(save_directory_str, "tokenizer_config.json"))
     except Exception as e:
-         pytest.fail(f"Initial model call failed: {e}")
+        pytest.fail(f"save_pretrained failed: {e}")
 
-    # 4. Save weights
+    # 4. Reload model and tokenizer
     try:
-        model.save_weights(save_path_str)
-        print(f"Model weights saved to {save_path_str}")
-        assert os.path.exists(save_path_str) # Check file was created
-    except Exception as e:
-        pytest.fail(f"Model save_weights failed: {e}")
-
-    # 5. Create a new instance
-    try:
-        loaded_model = create_span_prediction_model(max_len, learning_rate, vocab_size)
-        print("New model instance created.")
+        loaded_model = TFAutoModelForQuestionAnswering.from_pretrained(save_directory_str)
+        loaded_tokenizer = DistilBertTokenizer.from_pretrained(save_directory_str)
+        print(f"Model and tokenizer loaded from {save_directory_str}")
         assert loaded_model is not None
-        assert not loaded_model.built
-    except Exception as e:
-         pytest.fail(f"Failed to create new model instance for loading: {e}")
+        assert loaded_tokenizer is not None
+        # Check if tokenizer has the special token
+        assert "[IMG]" in loaded_tokenizer.get_vocab()
+        # Check if model vocab size matches reloaded tokenizer
+        base_model = getattr(loaded_model, loaded_model.base_model_prefix, None)
+        if base_model: assert base_model.config.vocab_size == len(loaded_tokenizer)
+        else: assert loaded_model.config.vocab_size == len(loaded_tokenizer)
 
-    # 6. Build the new model
+    except Exception as e:
+        pytest.fail(f"from_pretrained failed: {e}")
+
+    # 5. Check inference with reloaded model (optional basic check)
+    dummy_input_ids = tf.constant(np.random.randint(0, vocab_size, size=(2, max_len), dtype=np.int32))
+    dummy_attention_mask = tf.constant(np.ones((2, max_len), dtype=np.int32))
+    inputs = {'input_ids': dummy_input_ids, 'attention_mask': dummy_attention_mask}
     try:
-        _ = loaded_model(input_ids=dummy_input_ids, attention_mask=dummy_attention_mask, training=False)
-        assert loaded_model.built
+        outputs = loaded_model(inputs)
+        assert hasattr(outputs, 'start_logits') and hasattr(outputs, 'end_logits')
+        assert outputs.start_logits.shape == (2, max_len)
+        print("Prediction successful with loaded model.")
     except Exception as e:
-         pytest.fail(f"Failed to build new model instance before loading weights: {e}")
-
-    # 7. Load weights
-    try:
-        loaded_model.load_weights(save_path_str)
-        print(f"Model weights loaded from {save_path_str}")
-    except Exception as e:
-        pytest.fail(f"Model load_weights failed: {e}")
-
-    # --- Start Correction ---
-    # 8. Check inference with reloaded model produces the correct SHAPE
-    #    (Removed the strict numerical comparison with np.testing.assert_allclose)
-    try:
-        outputs_after = loaded_model(input_ids=dummy_input_ids, attention_mask=dummy_attention_mask, training=False)
-        print("Prediction successful with loaded weights.")
-
-        assert isinstance(outputs_after, list)
-        assert len(outputs_after) == 2
-        start_logits, end_logits = outputs_after
-        # Check shapes only
-        assert start_logits.shape == (batch_size, max_len)
-        assert end_logits.shape == (batch_size, max_len)
-        print("Output shapes verified after loading weights.")
-
-    except Exception as e:
-        pytest.fail(f"Prediction with loaded weights failed: {e}")
-    # --- End Correction ---
+        pytest.fail(f"Prediction with loaded model failed: {e}")
 
