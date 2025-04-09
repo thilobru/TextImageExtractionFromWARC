@@ -15,7 +15,6 @@ resiliparse>=0.6.0 # Check compatibility with fastwarc
 numpy>=1.20.0
 requests>=2.25.0
 Pillow>=9.0.0 # For image processing (PIL)
-python-jsonlines>=3.0.0 # If you still use it anywhere, or for temp files
 tqdm>=4.60.0 # Progress bars
 PyYAML>=6.0 # If you decide to use config.yaml
 
