@@ -24,6 +24,8 @@ Thumbs.db
 
 # Data files (often large - consider Git LFS if you need to track them)
 data/database/image_data.db
+data/database/image_data.db-shm
+data/database/image_data.db-wal
 data/warc/*
 !data/warc/.gitkeep # Keep the directory structure
 images_output/
