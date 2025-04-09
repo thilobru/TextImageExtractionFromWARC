@@ -2,6 +2,7 @@
 
 # Core ML/NLP
 tensorflow>=2.8.0 # Or your specific TF version
+tf.keras>=2.19
 transformers>=4.20.0 # Or your specific version
 torch>=1.10.0 # Required by transformers CLIPModel
 torchvision # Often needed alongside torch
