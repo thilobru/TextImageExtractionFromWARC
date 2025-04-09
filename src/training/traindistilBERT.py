@@ -2,7 +2,7 @@
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
-from .model import create_span_prediction_model
+from .modeldistilBERT import create_span_prediction_model
 from .data_loader import prepare_training_data
 from ..common.database import db_connect, get_training_contexts # Make sure get_training_contexts accepts limit
 from transformers import DistilBertTokenizer

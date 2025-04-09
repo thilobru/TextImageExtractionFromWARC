@@ -10,7 +10,7 @@ sys.path.insert(0, project_root)
 
 from src.common.logging_config import setup_logging
 from src.common.config import DEFAULT_DB_PATH, DEFAULT_MODELS_DIR, DEFAULT_TRAINING_PARAMS
-from training.traindistilBERT import train_model
+from src.training.traindistilBERT import train_model
 
 logger = logging.getLogger(__name__)
 

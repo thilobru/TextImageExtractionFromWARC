@@ -10,7 +10,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 sys.path.insert(0, project_root)
 
 # Import callbacks from train module
-from training.traindistilBERT import ExactMatch, IoUCallback
+from src.training.traindistilBERT import ExactMatch, IoUCallback
 
 # --- Fixtures ---
 

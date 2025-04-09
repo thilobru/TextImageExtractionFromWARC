@@ -13,7 +13,7 @@ sys.path.insert(0, project_root)
 
 from transformers import DistilBertTokenizer
 # Assuming model.py uses tf.squeeze and no explicit build in create_...
-from training.modeldistilBERT import create_span_prediction_model
+from src.training.modeldistilBERT import create_span_prediction_model
 
 # --- Fixtures ---
 @pytest.fixture(scope="module")
