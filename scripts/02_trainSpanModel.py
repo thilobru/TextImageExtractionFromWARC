@@ -22,11 +22,14 @@ def main():
     parser.add_argument("--model-save-dir", type=str, default=DEFAULT_MODELS_DIR, help="Directory to save trained models.")
     parser.add_argument("--params-json", type=str, default=None, help="Path to a JSON file with training parameters (overrides defaults).")
     parser.add_argument("--no-wandb", action="store_true", help="Disable Weights & Biases logging.")
-    # Add specific param overrides if needed, e.g., --epochs, --batch-size
+    # Add specific param overrides if needed
     parser.add_argument("--epochs", type=int, default=None, help="Override number of epochs.")
     parser.add_argument("--batch-size", type=int, default=None, help="Override batch size.")
     parser.add_argument("--lr", type=float, default=None, help="Override learning rate.")
-
+    # --- Start New Argument ---
+    parser.add_argument("--max-examples", type=int, default=None,
+                        help="Maximum number of training examples to load from DB (default: use all).")
+    # --- End New Argument ---
 
     args = parser.parse_args()
 
@@ -46,6 +49,11 @@ def main():
     if args.epochs is not None: training_params['epochs'] = args.epochs
     if args.batch_size is not None: training_params['batch_size'] = args.batch_size
     if args.lr is not None: training_params['learning_rate'] = args.lr
+    # --- Start Pass New Argument ---
+    # Add max_examples to training_params or pass separately
+    training_params['max_examples'] = args.max_examples
+    # --- End Pass New Argument ---
+
 
     logger.info(f"Using training parameters: {training_params}")
 
@@ -55,11 +63,13 @@ def main():
 
     os.makedirs(args.model_save_dir, exist_ok=True)
 
+    # Pass the max_examples limit to train_model
     train_model(
         db_path=args.db_path,
         model_save_dir=args.model_save_dir,
-        training_params=training_params,
+        training_params=training_params, # Pass the whole dict
         run_wandb=not args.no_wandb
+        # max_examples=args.max_examples # Alternative: pass as separate arg
     )
 
     logger.info("Training script finished.")
