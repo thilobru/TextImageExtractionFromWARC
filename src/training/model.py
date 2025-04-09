@@ -26,6 +26,8 @@ def create_span_prediction_model(max_len, learning_rate, tokenizer_vocab_size):
         if encoder.config.vocab_size != tokenizer_vocab_size:
              encoder.resize_token_embeddings(tokenizer_vocab_size)
              logger.info(f"Resized DistilBERT token embeddings to {tokenizer_vocab_size}")
+        # Get hidden size from config
+        hidden_size = encoder.config.dim
     except Exception as e:
         logger.error(f"Failed to load DistilBERT model: {e}")
         raise
@@ -34,9 +36,17 @@ def create_span_prediction_model(max_len, learning_rate, tokenizer_vocab_size):
     input_ids = layers.Input(shape=(max_len,), dtype=tf.int32, name="input_ids")
     attention_mask = layers.Input(shape=(max_len,), dtype=tf.int32, name="attention_mask")
 
-    # Get DistilBERT embeddings
-    # Use training=False to disable dropout during inference if needed, but usually keep default for training
-    embedding = encoder(input_ids, attention_mask=attention_mask)[0] # Last hidden state
+     # Define the expected output shape for the Lambda layer's output
+    # Shape is (sequence_length, hidden_size) - batch size is implicit
+    bert_output_shape = (max_len, hidden_size)
+
+    # Wrap the encoder call in a Lambda layer AND specify output_shape
+    encoder_output = layers.Lambda(
+        lambda inputs: encoder(input_ids=inputs[0], attention_mask=inputs[1], training=False)[0],
+        output_shape=bert_output_shape, # Specify the output shape
+        name="distilbert_encoder"
+    )([input_ids, attention_mask])
+    embedding = encoder_output
 
     # Create start and end logits for span prediction
     start_logits = layers.Dense(1, name="start_logit", use_bias=False)(embedding)
