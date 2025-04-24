@@ -60,7 +60,7 @@ def validation_data():
 def test_exact_match_callback(mock_model, validation_data):
     history_log = {}
     callback = ExactMatch(validation_data, history_log)
-    callback.model = mock_model # Assign the mock model
+    callback.set_model(mock_model) # Assign the mock model
 
     logs = {}
     callback.on_epoch_end(0, logs=logs)
@@ -81,7 +81,7 @@ def test_exact_match_callback(mock_model, validation_data):
 def test_iou_callback(mock_model, validation_data):
     history_log = {}
     callback = IoUCallback(validation_data, history_log)
-    callback.model = mock_model # Assign the mock model
+    callback.set_model(mock_model) # Assign the mock model
 
     logs = {}
     callback.on_epoch_end(0, logs=logs)
@@ -108,7 +108,7 @@ def test_iou_callback_invalid_span(mock_model, validation_data):
     invalid_val_data = (validation_data[0], [validation_data[1][0], np.array([10, 5, 8])]) # end < start for sample 1
 
     callback = IoUCallback(invalid_val_data, history_log)
-    callback.model = mock_model
+    callback.set_model(mock_model)
 
     logs = {}
     callback.on_epoch_end(0, logs=logs)

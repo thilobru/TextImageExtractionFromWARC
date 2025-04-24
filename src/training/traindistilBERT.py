@@ -1,15 +1,13 @@
-# src/training/train.py
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 from .modeldistilBERT import create_span_prediction_model
 from .data_loader import prepare_training_data
-from ..common.database import db_connect, get_training_contexts # Make sure get_training_contexts accepts limit
+from ..common.database import db_connect, get_training_contexts
 from transformers import DistilBertTokenizer
 import logging
 import os
 import wandb
-# from wandb.keras import WandbMetricsLogger # Prefer WandbCallback
 from wandb.integration.keras import WandbCallback
 
 logger = logging.getLogger(__name__)
@@ -135,7 +133,7 @@ def train_model(db_path, model_save_dir, training_params, run_wandb=True):
         logger.error("Failed to prepare any valid training examples from the loaded contexts.")
         return
 
-    # --- Prepare Validation Split (remains the same) ---
+    # --- Prepare Validation Split ---
     val_split = training_params.get('validation_split', 0.2)
     if val_split > 0 and len(x_tokens) > 1: # Need at least 2 samples to split
          num_samples = len(x_tokens)
@@ -164,14 +162,14 @@ def train_model(db_path, model_save_dir, training_params, run_wandb=True):
          logger.info(f"Using {len(x_tokens)} samples for training, no validation split.")
 
 
-    # --- Create Model (remains the same) ---
+    # --- Create Model ---
     model = create_span_prediction_model(
         max_len=training_params['max_len'],
         learning_rate=training_params['learning_rate'],
         tokenizer_vocab_size=len(tokenizer)
     )
 
-    # --- Setup Callbacks (remains the same) ---
+    # --- Setup Callbacks ---
     callbacks = []
     history_log = {}
     monitor_metric = 'val_loss' if validation_data else 'loss'

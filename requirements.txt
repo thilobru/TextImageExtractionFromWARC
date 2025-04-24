@@ -1,7 +1,8 @@
 # requirements.txt
 
 # Core ML/NLP
-tensorflow>=2.8.0 # Or your specific TF version
+#tensorflow>=2.8.0 # Or your specific TF version
+tensorflow[and-cuda]
 tf.keras>=2.19
 transformers>=4.20.0 # Or your specific version
 torch>=1.10.0 # Required by transformers CLIPModel
@@ -17,9 +18,9 @@ numpy>=1.20.0
 requests>=2.25.0
 Pillow>=9.0.0 # For image processing (PIL)
 tqdm>=4.60.0 # Progress bars
-PyYAML>=6.0 # If you decide to use config.yaml
+PyYAML>=6.0 # If using config.yaml
 
-# Experiment Tracking (Optional)
+# Experiment Tracking
 wandb>=0.12.0
 
 # Analysis/Plotting (Optional, if not just using notebooks)
@@ -28,7 +29,6 @@ matplotlib>=3.5.0
 seaborn>=0.11.0
 scipy>=1.7.0 # For stats like pearsonr
 
-# Add specific versions if you encounter compatibility issues.
 # You can generate this automatically from your environment using:
 # pip freeze > requirements.txt
 # (Clean it up afterwards to remove dev tools etc.)

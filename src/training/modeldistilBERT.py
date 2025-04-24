@@ -2,10 +2,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-# --- Start Correction ---
-# Import the legacy Adam optimizer
 from tensorflow.keras.optimizers.legacy import Adam as LegacyAdam
-# --- End Correction ---
 from transformers import TFDistilBertModel, DistilBertTokenizer
 import logging
 
@@ -68,10 +65,7 @@ def create_span_prediction_model(max_len, learning_rate, tokenizer_vocab_size):
     model = SpanPredictionModel(max_len=max_len, tokenizer_vocab_size=tokenizer_vocab_size)
 
     loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-    # --- Start Correction ---
-    # Use the legacy Adam optimizer
     optimizer = LegacyAdam(learning_rate=learning_rate)
-    # --- End Correction ---
     model.compile(optimizer=optimizer, loss=[loss, loss])
 
     logger.info("Span prediction model (subclassed) created and compiled.")
