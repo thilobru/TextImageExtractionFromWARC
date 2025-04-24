@@ -26,10 +26,8 @@ def main():
     parser.add_argument("--epochs", type=int, default=None, help="Override number of epochs.")
     parser.add_argument("--batch-size", type=int, default=None, help="Override batch size.")
     parser.add_argument("--lr", type=float, default=None, help="Override learning rate.")
-    # --- Start New Argument ---
     parser.add_argument("--max-examples", type=int, default=None,
                         help="Maximum number of training examples to load from DB (default: use all).")
-    # --- End New Argument ---
 
     args = parser.parse_args()
 
