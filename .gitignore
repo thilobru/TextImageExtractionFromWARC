@@ -22,7 +22,7 @@ env/
 .DS_Store
 Thumbs.db
 
-# Data files (often large - consider Git LFS if you need to track them)
+# Data files (consider Git LFS)
 data/database/image_data.db
 data/database/image_data.db-shm
 data/database/image_data.db-wal
@@ -31,7 +31,8 @@ data/warc/*
 images_output/
 !images_output/.gitkeep
 
-# Model files (large - use Git LFS or store elsewhere)
+# Model files (use Git LFS)
+models/*
 models/span_predictor/*.h5
 models/span_predictor/*.keras
 models/span_predictor/variables/

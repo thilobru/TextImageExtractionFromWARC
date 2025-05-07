@@ -2,15 +2,16 @@
 
 # Core ML/NLP
 #tensorflow>=2.8.0 # Or your specific TF version
-tensorflow[and-cuda]
-transformers>=4.20.0 # Or your specific version
-torch>=1.10.0 # Required by transformers CLIPModel
-torchvision # Often needed alongside torch
-accelerate # Often helpful for transformers
+tensorflow[and-cuda]>=2.13.0
+transformers>=4.30.0 # Or your specific version
+tf-keras
+#torch==2.0.0 # Required by transformers CLIPModel
+#torchvision # Often needed alongside torch
+#accelerate # Often helpful for transformers
 
 # WARC Processing
 fastwarc>=0.4.0
-resiliparse>=0.6.0 # Check compatibility with fastwarc
+resiliparse>=0.6.0
 
 # Data Handling & Utilities
 numpy>=1.20.0
