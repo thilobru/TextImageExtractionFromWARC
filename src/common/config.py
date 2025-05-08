@@ -13,11 +13,11 @@ DEFAULT_IMAGES_DIR = os.path.join(PROJECT_ROOT, "images_output") # For downloade
 DEFAULT_TRAINING_PARAMS = {
     "model_checkpoint": "distilbert-base-uncased", # Default model checkpoint
     "max_len": 512,
-    "batch_size": 12,
+    "batch_size": 4,
     "epochs": 10,
     "learning_rate": 5e-5,
     "validation_split": 0.2,
-    "early_stopping_patience": 3, # Default patience for early stopping
+    "early_stopping_patience": 10, # Default patience for early stopping
     "max_examples": None # Default to use all available examples
 }
 
